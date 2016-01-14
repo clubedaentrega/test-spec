@@ -1,12 +1,22 @@
-# Test-spec-parser
-[![Build Status](https://travis-ci.org/clubedaentrega/test-spec-parser.svg?branch=master)](https://travis-ci.org/clubedaentrega/test-spec-parser)
-[![Inline docs](http://inch-ci.org/github/clubedaentrega/test-spec-parser.svg?branch=master)](http://inch-ci.org/github/clubedaentrega/test-spec-parser)
-[![Dependency Status](https://david-dm.org/clubedaentrega/test-spec-parser.svg)](https://david-dm.org/clubedaentrega/test-spec-parser)
+# Test Spec Parser
+[![Build Status](https://travis-ci.org/clubedaentrega/test-spec.svg?branch=master)](https://travis-ci.org/clubedaentrega/test-spec)
+[![Inline docs](http://inch-ci.org/github/clubedaentrega/test-spec.svg?branch=master)](http://inch-ci.org/github/clubedaentrega/test-spec)
+[![Dependency Status](https://david-dm.org/clubedaentrega/test-spec.svg)](https://david-dm.org/clubedaentrega/test-spec)
 
-A
+A parser and runtime for markdown-inspired documentation and testing files
 
 ## Install
-`npm install test-spec-parser --save`
+`npm install @clubedaentrega/test-spec --save`
 
 ## Usage
-Usage
+```js
+let testSpec = require('@clubedaentrega/test-spec')
+
+// Usually, the source is read from some *.md file
+let source = '# Title\n'+
+	'## Section\n'+
+	'Some textual comment\n'+
+	'\texecute_some_code()'
+
+let tree = testSpec.parse(source)
+```
