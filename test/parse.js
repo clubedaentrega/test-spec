@@ -1,7 +1,8 @@
 /*globals describe, it*/
 'use strict'
 
-let parser = require('.')
+let parser = require('..')
+require('should')
 
 describe('parse', () => {
 	it('should parse the README example', () => {
