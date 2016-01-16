@@ -10,7 +10,7 @@ describe('parse', () => {
 				'# Title\n',
 				'## Section\n',
 				'Some textual comment\n',
-				'\tuser:',
+				'\tuser:\n',
 				'\t\tname: "Gui"'
 			],
 			source = lines.join('')
