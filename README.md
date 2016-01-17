@@ -8,6 +8,9 @@ A parser and runtime for markdown-inspired documentation and testing files
 ## Install
 `npm install @clubedaentrega/test-spec --save`
 
+## Status
+**IN PROGRESS**
+
 ## Usage
 ```js
 let testSpec = require('@clubedaentrega/test-spec')
