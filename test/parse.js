@@ -1,31 +1,28 @@
 /*globals describe, it*/
 'use strict'
 
-let parser = require('..')
+let spec = require('..')
 require('should')
 
 describe('parse', () => {
-	it('should parse the README example', () => {
-		let lines = [
-				'# Title\n',
-				'## Section\n',
-				'Some textual comment\n',
-				'\tuser:\n',
-				'\t\tname: "Gui"'
-			],
-			source = lines.join('')
+	let source = '# Title\n' +
+		'## Sub section\n' +
+		'Some textual content\n' +
+		'\tuser:\n' +
+		'\t\tname: "Gui".toUpperCase()'
 
-		parser.parse(source).should.be.eql({
+	it('should parse the README example', () => {
+		spec.parse(source).should.be.eql({
 			type: 'section',
 			name: 'Title',
 			line: 1,
 			children: [{
 				type: 'section',
-				name: 'Section',
+				name: 'Sub section',
 				line: 2,
 				children: [{
 					type: 'text',
-					content: 'Some textual comment',
+					content: 'Some textual content',
 					line: 3,
 					size: 1
 				}, {
@@ -47,13 +44,23 @@ describe('parse', () => {
 									subtype: 'js',
 									line: 5,
 									size: 1,
-									code: '"Gui"'
+									code: '"Gui".toUpperCase()'
 								}
 							}]
 						}
 					}]
 				}]
 			}]
+		})
+	})
+
+	it('should run the README example', function () {
+		let mainSection = spec.compile(source),
+			value = mainSection.children[0].children[1].run()
+		value.should.be.eql({
+			user: {
+				name: 'GUI'
+			}
 		})
 	})
 })
