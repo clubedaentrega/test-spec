@@ -1,6 +1,6 @@
 {
 	"name": "@clubedaentrega/test-spec",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"author": "Sitegui <sitegui@sitegui.com.br>",
 	"description": "A parser and runtime for markdown-inspired documentation and testing files",
 	"main": "./index.js",
