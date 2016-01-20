@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: lib/parse.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: lib/parse.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/** @module */
+'use strict'
+
+let getSnippet = require('./getSnippet'),
+	parseValue = require('./parseValue'),
+	emptyRegex = /^[ \t]*$/,
+	headerRegex = /^(#+)(?: (.*))?$/
+
+/**
+ * @typedef {Object} Value
+ * @global
+ * @property {string} type - always 'value'
+ * @property {string} subtype - one of: 'array', 'object', 'mixin', 'js', 'compiled'
+ * @property {number} line
+ * @property {number} size
+ * @property {?Array&lt;Value>} elements - present for subtype 'array'
+ * @property {?boolean} isUnordered - present for subtype 'array'
+ * @property {?Array&lt;{name: string, value: Value}>} keys - present for subtype 'object'
+ * @property {?string} base - present for subtype 'mixin'
+ * @property {?Array&lt;string>} removals - present for subtype 'mixin'
+ * @property {?Array&lt;{name: string, value: Value}>} additions - present for subtype 'mixin'
+ * @property {?string} code - present for subtype 'js'
+ * @property {?function(Object):*} run - present for subtype 'compiled'
+ */
+
+/**
+ * @typedef {Object} Text
+ * @global
+ * @property {string} type - always 'text'
+ * @property {string} content - the paragraph content
+ * @property {number} line
+ * @property {number} size - number of lines
+ */
+
+/**
+ * @typedef {Object} Section
+ * @global
+ * @property {string} type - always 'section'
+ * @property {string} name
+ * @property {number} line
+ * @property {Array&lt;Section|Text|Value>} children
+ */
+
+/**
+ * Parses the source
+ * @param {string} source
+ * @returns {Section}
+ */
+module.exports = function (source) {
+	// Split in lines
+	let lines = source.split(/\r?\n/),
+		// Current section
+		section = {
+			type: 'section',
+			name: '',
+			line: 1,
+			children: []
+		},
+		// sectionStack[sectionStack.length - 1] === section
+		sectionStack = [section],
+		line = 1,
+		match
+
+	// First line must be a header level 1
+	if (!lines.length) {
+		throwSyntaxError('Empty file')
+	} else if (!(match = lines[0].match(headerRegex)) || match[1] !== '#') {
+		throwSyntaxError('The file must start with a level 1 header')
+	}
+	section.name = match[2] || ''
+
+	// Parse flags:
+	// Whether the next block should not amend the previous
+	let newBlock = true
+
+	// Pre parse each line, without filling text content or parsing values
+	for (line = 2; line &lt;= lines.length; line++) {
+		let str = lines[line - 1]
+
+		if (emptyRegex.test(str)) {
+			takeEmptyLine()
+			newBlock = true
+		} else if ((match = str.match(headerRegex))) {
+			takeHeader(match[1].length, match[2])
+		} else if (str[0] === '\t') {
+			// Value
+			appendLine('value')
+		} else if (!/\s/.test(str[0])) {
+			// Text
+			appendLine('text')
+		} else {
+			throwSyntaxError('Invalid line. Are you using tabs?')
+		}
+	}
+
+	// Gather text content and parse values
+	let finalParse = function (section) {
+		section.children.forEach(child => {
+			if (child.type === 'section') {
+				finalParse(child)
+			} else if (child.type === 'text' || child.type === 'value') {
+				let sliceStart = child.line - 1,
+					sliceEnd = child.line + child.size - 1,
+					subLines = lines.slice(sliceStart, sliceEnd)
+				if (child.type === 'text') {
+					child.content = subLines.join('\n')
+				} else if (child.type === 'value') {
+					// Remove starting tab character
+					parseValue(child, subLines.map((e, i) => ({
+						line: child.line + i,
+						str: e.substr(1)
+					})), throwSyntaxError)
+				}
+			}
+		})
+	}
+	finalParse(sectionStack[0])
+
+	return sectionStack[0]
+
+	/**
+	 * An empty line forces two consecutives text (or value) blocks to be split
+	 * In any other situation, it has no special meaning
+	 * @private
+	 */
+	function takeEmptyLine() {
+		newBlock = true
+	}
+
+	/**
+	 * Process a new header, creating a new section
+	 * @param {number} level
+	 * @param {?string} name
+	 * @private
+	 */
+	function takeHeader(level, name) {
+		let currLevel = sectionStack.length
+
+		if (level > currLevel + 1) {
+			throwSyntaxError(`Unexpected header level ${level} on section level ${currLevel}`)
+		} else if (level === 1) {
+			throwSyntaxError('There can be only one header level 1, the first line of the file')
+		}
+
+		// Walk out
+		sectionStack.length = level - 1
+
+		// Create section
+		section = {
+			type: 'section',
+			name: name || '',
+			line: line,
+			children: []
+		}
+		sectionStack[sectionStack.length - 1].children.push(section)
+		sectionStack.push(section)
+	}
+
+	/**
+	 * Throw a syntax error in the current position
+	 * @param {string} message
+	 * @param {number} [errorLine=line]
+	 * @param {number} [size=1]
+	 * @throws {SyntaxError}
+	 * @private
+	 */
+	function throwSyntaxError(message, errorLine, size) {
+		errorLine = errorLine === undefined ? line : errorLine
+		size = size === undefined ? 1 : size
+		let snippet = getSnippet(source, errorLine, size),
+			err = new SyntaxError(`${message}\n${snippet}`)
+		err.line = errorLine
+		throw err
+	}
+
+	/**
+	 * Append the current line to the last block with the given type,
+	 * or create a new one
+	 * @param {string} type
+	 * @private
+	 */
+	function appendLine(type) {
+		let len = section.children.length
+		if (newBlock ||
+			!len ||
+			section.children[len - 1].type !== type) {
+			section.children.push({
+				type: type,
+				line: line,
+				size: 1
+			})
+		} else {
+			section.children[len - 1].size += 1
+		}
+		newBlock = false
+	}
+}</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-index.html">index</a></li><li><a href="module-lib_baseContext.html">lib/baseContext</a></li><li><a href="module-lib_compile.html">lib/compile</a></li><li><a href="module-lib_getSnippet.html">lib/getSnippet</a></li><li><a href="module-lib_parse.html">lib/parse</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Wed Jan 20 2016 02:06:31 GMT-0200 (BRST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

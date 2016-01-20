@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Home</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Home</h1>
+
+    
+
+
+
+    
+
+
+    <h3> </h3>
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+    <section>
+        <article><h1>Test Spec Parser</h1><p><a href="https://travis-ci.org/clubedaentrega/test-spec"><img src="https://travis-ci.org/clubedaentrega/test-spec.svg?branch=master" alt="Build Status"></a>
+<a href="http://inch-ci.org/github/clubedaentrega/test-spec"><img src="http://inch-ci.org/github/clubedaentrega/test-spec.svg?branch=master" alt="Inline docs"></a>
+<a href="https://david-dm.org/clubedaentrega/test-spec"><img src="https://david-dm.org/clubedaentrega/test-spec.svg" alt="Dependency Status"></a></p>
+<p>A parser and runtime for markdown-inspired documentation and testing files</p>
+<h2>Install</h2><p><code>npm install @clubedaentrega/test-spec --save</code></p>
+<h2>Usage</h2><pre class="prettyprint source lang-js"><code>let spec = require('@clubedaentrega/test-spec')
+
+// Usually, the source is read from some *.md file
+let source = '# Title\n'+
+    '## Sub section\n'+
+    'Some textual content\n'+
+    '\tuser:\n'+
+    '\t\tname: &quot;Gui&quot;.toUpperCase()'
+
+// Compile the source to a tree of section, text and value blocks
+let mainSection = spec.compile(source),
+    subSection = mainSection.children[0],
+    valueBlock = subSection.children[1],
+    // Execute the value block
+    value = valueBlock.run()
+
+console.log(value) // {user: {name: 'GUI'}}</code></pre><h2>Concepts</h2><p>Testing is, at the same time:</p>
+<ul>
+<li><em>very</em> great because it lets you trust code is ready for production!</li>
+<li>extremely <em>boring</em> to write, because test code is dumb and repetitive</li>
+</ul>
+<p>This module tries to solve this by making testing code more concise and unifying testing and documentation.</p>
+<p>Markdown was choosen because it's easy to write/read and it's not code!</p>
+<p>This module is the fundamental parser and compiler for <a href="https://github.com/clubedaentrega/api-test">api-test</a>, but can be used separately.</p>
+<h2>Syntax and parsing</h2><p>This module implements a tiny subset of markdown: headers, paragraphs and code blocks. It does not aim at understanding any other feature (like lists, images, links, etc), but those constructions are accepted. That is, they are not considered valid syntax, but are simply treated as text.</p>
+<p>The source is first transformed into a tree of sections (headers). Each section may have sub-sections, text paragraphs and value blocks.</p>
+<h2>Compiling</h2><p>Parsed values are compiled to native JS functions, exposing a <code>run()</code> method, like in example above.</p>
+<h2>Value syntax</h2><p>The syntax for value expressions was designed to be concise and expressive. The values will be eval'ed as normal JS with a context with special variables (see <code>default context</code> bellow).</p>
+<p>The object can be a simple JS value, like:</p>
+<pre class="prettyprint source"><code>new Date</code></pre><p>Or an object with one property by line and tabs used to declare sub-objects:</p>
+<pre class="prettyprint source"><code>user:
+    name:
+        first: 'Happy'
+        last: 'Customer'
+    age: 37 + 2
+    country: 'cm'.toUpperCase()</code></pre><p>Or mixins, like:</p>
+<pre class="prettyprint source"><code>user with name.first: 'Unhappy'</code></pre><p>Learn more about the syntax in the file <a href="https://github.com/clubedaentrega/test-spec/blob/master/value-syntax.md">value-syntax.md</a></p>
+<h2>Default context</h2><p>The following functions are defined in <code>spec.baseContext</code> and can be used to provide a common set of utility functions to tests.</p>
+<ul>
+<li><code>randomStr([len=8], [alphabet=a-zA-Z0-9+/])</code></li>
+<li><code>randomHex([len=8])</code></li>
+<li><code>randomCode([len=8])</code></li>
+<li><code>randomEmail([domain='example.com'])</code></li>
+<li><code>randomUrl([base='http://example.com'])</code></li>
+<li><code>random([min=0],[max=1])</code></li>
+<li><code>randomInt([min=0],[max=100])</code></li>
+<li><code>randomBool()</code></li>
+<li><code>randomDate([interval=1day], [base=now])</code>: return a random date in the past</li>
+<li><code>randomOf(...values)</code>: return one of its arguments</li>
+<li><code>empty</code>: the empty object <code>{}</code></li>
+</ul>
+<h2>Docs</h2><p>See <a href="http://clubedaentrega.github.io/test-spec">complete docs</a></p></article>
+    </section>
+
+
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-index.html">index</a></li><li><a href="module-lib_baseContext.html">lib/baseContext</a></li><li><a href="module-lib_compile.html">lib/compile</a></li><li><a href="module-lib_getSnippet.html">lib/getSnippet</a></li><li><a href="module-lib_parse.html">lib/parse</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Wed Jan 20 2016 02:06:31 GMT-0200 (BRST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
