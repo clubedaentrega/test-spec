@@ -1,17 +1,17 @@
 /*globals describe, it*/
 'use strict'
 
-let spec = require('..')
+var spec = require('..')
 require('should')
 
-describe('parse', () => {
-	let source = '# Title\n' +
+describe('parse', function () {
+	var source = '# Title\n' +
 		'## Sub section\n' +
 		'Some textual content\n' +
 		'\tuser:\n' +
 		'\t\tname: "Gui".toUpperCase()'
 
-	it('should parse the README example', () => {
+	it('should parse the README example', function () {
 		spec.parse(source).should.be.eql({
 			type: 'section',
 			name: 'Title',
@@ -55,7 +55,7 @@ describe('parse', () => {
 	})
 
 	it('should run the README example', function () {
-		let mainSection = spec.compile(source),
+		var mainSection = spec.compile(source),
 			value = mainSection.children[0].children[1].run()
 		value.should.be.eql({
 			user: {

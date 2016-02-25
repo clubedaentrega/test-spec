@@ -19,6 +19,6 @@
 	"freeze": true,
 	"-W033": true,
 	"-W058": true,
-	"esnext": true,
+	"esnext": false,
 	"globals": {}
 }

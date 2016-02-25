@@ -1,7 +1,7 @@
 /*globals describe, it*/
 'use strict'
 
-let should = require('should'),
+var should = require('should'),
 	spec = require('..'),
 	context = {
 		user: {
@@ -218,7 +218,9 @@ describe('value syntax', function () {
 })
 
 function check(lines, value) {
-	let source = '#\n' + lines.map(e => `\t${e}`).join('\n'),
+	var source = '#\n' + lines.map(function (e) {
+			return '\t' + e
+		}).join('\n'),
 		parsed = spec.parse(source)
 	spec.compile(source, parsed)
 	should(parsed.children[0].run(context)).be.eql(value)

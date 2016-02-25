@@ -10,17 +10,17 @@ A parser and runtime for markdown-inspired documentation and testing files
 
 ## Usage
 ```js
-let spec = require('@clubedaentrega/test-spec')
+var spec = require('@clubedaentrega/test-spec')
 
 // Usually, the source is read from some *.md file
-let source = '# Title\n'+
+var source = '# Title\n'+
 	'## Sub section\n'+
 	'Some textual content\n'+
 	'\tuser:\n'+
 	'\t\tname: "Gui".toUpperCase()'
 
 // Compile the source to a tree of section, text and value blocks
-let mainSection = spec.compile(source),
+var mainSection = spec.compile(source),
 	subSection = mainSection.children[0],
 	valueBlock = subSection.children[1],
 	// Execute the value block
