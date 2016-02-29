@@ -28,7 +28,7 @@
         <article>
             <pre class="prettyprint source linenums"><code>'use strict'
 
-let objectKeyRegex = /^(?:(\w+\??)|(['"])((\\\\|\\\2|.)*?)\2):\s*/i,
+var objectKeyRegex = /^(?:(\w+\??)|(['"])((\\\\|\\\2|.)*?)\2):\s*/i,
 	objectPathRegex = /^(\w+(\.\w+)*):\s*/i,
 	mixinRegex = /^(\w+(?:\.\w+)*) (without|with)( .*)?$/,
 	mixinRemovalsRegex = /^(.*?)(;? with( .*)?)?$/,
@@ -56,6 +56,7 @@ module.exports = function (block, lines, throwSyntaxError) {
 		if (!(tryParseArray(block, lines) ||
 				tryParseObject(block, lines) ||
 				tryParseMixin(block, lines) ||
+				tryParseFunction(block, lines) ||
 				tryParseJS(block, lines))) {
 			throwSyntaxError('Invalid value syntax', block.line, block.size)
 		}
@@ -77,16 +78,16 @@ module.exports = function (block, lines, throwSyntaxError) {
 		block.elements = []
 		block.isUnordered = lines[0].str[0] === '@'
 
-		let subValue, subLines
+		var subValue, subLines
 
-		lines.forEach(each => {
-			let line = each.line,
+		lines.forEach(function (each) {
+			var line = each.line,
 				str = each.str
 
 			if (str[0] === '*' || str[0] === '@') {
 				// A new element
 				if (str[1] !== '\t') {
-					throwSyntaxError(`Expected a tab after ${str[0]}`, line)
+					throwSyntaxError('Expected a tab after ' + str[0], line)
 				}
 				if (subValue) {
 					parseValue(subValue, subLines)
@@ -129,7 +130,7 @@ module.exports = function (block, lines, throwSyntaxError) {
 	 * @returns {boolean}
 	 */
 	function tryParseObject(block, lines, allowPath) {
-		let regex = allowPath ? objectPathRegex : objectKeyRegex
+		var regex = allowPath ? objectPathRegex : objectKeyRegex
 
 		if (!lines.length || !regex.test(lines[0].str)) {
 			// An object must start with '_key_:'
@@ -140,10 +141,10 @@ module.exports = function (block, lines, throwSyntaxError) {
 		block.subtype = 'object'
 		block.keys = []
 
-		let subValue, subLines
+		var subValue, subLines
 
-		lines.forEach(each => {
-			let line = each.line,
+		lines.forEach(function (each) {
+			var line = each.line,
 				str = each.str,
 				match
 
@@ -154,7 +155,7 @@ module.exports = function (block, lines, throwSyntaxError) {
 				}
 
 				// 1 for path and simple key; 3 for escaped key
-				let key = allowPath ? match[1] : match[1] || match[3]
+				var key = allowPath ? match[1] : match[1] || match[3]
 				subValue = {
 					type: 'value',
 					line: line,
@@ -190,7 +191,7 @@ module.exports = function (block, lines, throwSyntaxError) {
 	 * @returns {boolean}
 	 */
 	function tryParseMixin(block, lines) {
-		let match
+		var match
 
 		if (!lines.length ||
 			!(match = lines[0].str.match(mixinRegex))) {
@@ -205,19 +206,19 @@ module.exports = function (block, lines, throwSyntaxError) {
 		block.additions = []
 
 		// Without
-		let preposition = match[2],
+		var preposition = match[2],
 			substr = (match[3] || '').trimLeft()
 		if (preposition === 'without') {
-			let subMatch = substr.match(mixinRemovalsRegex)
+			var subMatch = substr.match(mixinRemovalsRegex)
 
 			if (!subMatch) {
 				throwSyntaxError('Invalid mixin removal list', lines[0].line)
 			}
 
-			block.removals = subMatch[1].split(',').map(each => {
+			block.removals = subMatch[1].split(',').map(function (each) {
 				each = each.trim()
 				if (!each.match(pathRegex)) {
-					throwSyntaxError(`Invalid removal path: ${each}`, lines[0].line)
+					throwSyntaxError('Invalid removal path: ' + each, lines[0].line)
 				}
 				return each
 			})
@@ -234,7 +235,7 @@ module.exports = function (block, lines, throwSyntaxError) {
 
 		// With
 		if (preposition === 'with') {
-			let subValue = {
+			var subValue = {
 					type: 'value',
 					line: lines[0].line,
 					size: 1
@@ -244,8 +245,8 @@ module.exports = function (block, lines, throwSyntaxError) {
 					str: substr
 				}]
 
-			lines.forEach((each, i) => {
-				let line = each.line,
+			lines.forEach(function (each, i) {
+				var line = each.line,
 					str = each.str
 				if (!i) {
 					// Ignore first line
@@ -279,6 +280,40 @@ module.exports = function (block, lines, throwSyntaxError) {
 	 * @param {Array&lt;string>} lines
 	 * @returns {boolean}
 	 */
+	function tryParseFunction(block, lines) {
+		if (!lines.length || !lines[0].str.match(/^function( .*)?$/)) {
+			// A function must start with 'function'
+			return false
+		}
+
+		// Update block
+		block.subtype = 'function'
+		block.args = lines[0].str.substr('function '.length)
+		block.body = ''
+
+		var bodyLines = []
+
+		lines.slice(1).forEach(function (each) {
+			var line = each.line,
+				str = each.str
+
+			if (str[0] === '\t') {
+				// Body continuation
+				bodyLines.push(str.substr(1))
+			} else {
+				throwSyntaxError('Expected a tab', line)
+			}
+		})
+		block.body = bodyLines.join('\n')
+
+		return true
+	}
+
+	/**
+	 * @param {Value} block
+	 * @param {Array&lt;string>} lines
+	 * @returns {boolean}
+	 */
 	function tryParseJS(block, lines) {
 		if (lines.length !== 1) {
 			return false
@@ -298,14 +333,14 @@ module.exports = function (block, lines, throwSyntaxError) {
 	 * @returns {Array&lt;{line: number, str: string}>}
 	 */
 	function cleanLines(block, lines) {
-		let removeFirst = false
+		var removeFirst = false
 		if (lines.length &amp;&amp; emptyRegex.test(lines[0].str)) {
 			block.line += 1
 			block.size -= 1
 			removeFirst = true
 		}
 
-		return lines.filter((each, i) => {
+		return lines.filter(function (each, i) {
 			return !(!i &amp;&amp; removeFirst) &amp;&amp; !commentRegex.test(each.str)
 		})
 	}
@@ -325,7 +360,7 @@ module.exports = function (block, lines, throwSyntaxError) {
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Wed Jan 20 2016 02:06:31 GMT-0200 (BRST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Mon Feb 29 2016 10:05:24 GMT-0300 (BRT)
 </footer>
 
 <script> prettyPrint(); </script>

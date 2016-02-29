@@ -28,7 +28,7 @@
         <article>
             <pre class="prettyprint source linenums"><code>'use strict'
 
-let getSnippet = require('./getSnippet'),
+var getSnippet = require('./getSnippet'),
 	mixin = require('./mixin'),
 	numericRegex = /^\d+$/
 
@@ -39,13 +39,13 @@ let getSnippet = require('./getSnippet'),
  * @returns {Value} - with subtype 'compiled'
  */
 module.exports = function (source, value) {
-	let code = 'with (__context) {',
+	var code = 'with (__context) {',
 		n = 0
 
 	compileValue(value)
 	code += '\n}\nreturn __0'
 
-	let fun
+	var fun
 	try {
 		/*jshint evil:true*/
 		fun = new Function('__context, __mixin, __pos', code)
@@ -54,16 +54,16 @@ module.exports = function (source, value) {
 		throw e
 	}
 
-	let run = function (context) {
-		let pos = {
+	var run = function (context) {
+		var pos = {
 			line: 1,
 			size: 1
 		}
 		try {
 			return fun(context || {}, mixin, pos)
 		} catch (err) {
-			let snippet = getSnippet(source, pos.line, pos.size)
-			err.message = `${err.message}\n${snippet}`
+			var snippet = getSnippet(source, pos.line, pos.size)
+			err.message = err.message + '\n' + snippet
 			throw err
 		}
 	}
@@ -91,8 +91,10 @@ module.exports = function (source, value) {
 			return compileMixin(value)
 		} else if (value.subtype === 'js') {
 			return compileJS(value)
+		} else if (value.subtype === 'function') {
+			return compileFunction(value)
 		}
-		throw new Error(`Invalid subtype: ${value.subtype}`)
+		throw new Error('Invalid subtype: ' + value.subtype)
 	}
 
 	/**
@@ -101,13 +103,13 @@ module.exports = function (source, value) {
 	 * @private
 	 */
 	function compileArray(value) {
-		let name = `__${n++}`
-		code += `\nvar ${name} = new Array(${value.elements.length})`
-		code += `\n${name}.isUnordered = ${value.isUnordered}`
+		var name = '__' + (n++)
+		code += '\nvar ' + name + ' = new Array(' + value.elements.length + ')'
+		code += '\n' + name + '.isUnordered = ' + value.isUnordered
 
-		value.elements.forEach((subValue, i) => {
-			let subName = compileValue(subValue)
-			code += `\n${name}[${i}] = ${subName}`
+		value.elements.forEach(function (subValue, i) {
+			var subName = compileValue(subValue)
+			code += '\n' + name + '[' + i + '] = ' + subName
 		})
 
 		return name
@@ -119,12 +121,12 @@ module.exports = function (source, value) {
 	 * @private
 	 */
 	function compileObject(value) {
-		let name = `__${n++}`
-		code += `\nvar ${name} = {}`
+		var name = '__' + (n++)
+		code += '\nvar ' + name + ' = {}'
 
-		value.keys.forEach(each => {
-			let subName = compileValue(each.value)
-			code += `\n${name}['${escape(each.name)}'] = ${subName}`
+		value.keys.forEach(function (each) {
+			var subName = compileValue(each.value)
+			code += '\n' + name + '[\'' + escape(each.name) + '\'] = ' + subName
 		})
 
 		return name
@@ -136,21 +138,21 @@ module.exports = function (source, value) {
 	 * @private
 	 */
 	function compileMixin(value) {
-		let name = `__${n++}`,
-			nameAdditions = `__${n++}`,
+		var name = '__' + (n++),
+			nameAdditions = '__' + (n++),
 			base = value.base.replace(/\.(\d+)(?=\.|$)/g, '[$1]'),
 			removals = value.removals.map(preparePath).join(', ')
 
-		code += `\nvar ${nameAdditions} = new Array(${value.additions.length})`
+		code += '\nvar ' + nameAdditions + ' = new Array(' + value.additions.length + ')'
 
-		value.additions.forEach((addition, i) => {
-			let path = preparePath(addition.name),
+		value.additions.forEach(function (addition, i) {
+			var path = preparePath(addition.name),
 				subName = compileValue(addition.value)
-			code += `\n${nameAdditions}[${i}] = {path: ${path}, value: ${subName}}`
+			code += '\n' + nameAdditions + '[' + i + '] = {path: ' + path + ', value: ' + subName + '}'
 		})
 
-		code += `\n__pos.line = ${value.line}, __pos.size = ${value.size}`
-		code += `\nvar ${name} = __mixin(${base}, [${removals}], ${nameAdditions})`
+		code += '\n__pos.line = ' + value.line + ', __pos.size = ' + value.size
+		code += '\nvar ' + name + ' = __mixin(' + base + ', [' + removals + '], ' + nameAdditions + ')'
 
 		return name
 	}
@@ -161,10 +163,23 @@ module.exports = function (source, value) {
 	 * @private
 	 */
 	function compileJS(value) {
-		let name = `__${n++}`
+		var name = '__' + (n++)
 
-		code += `\n__pos.line = ${value.line}, __pos.size = ${value.size}`
-		code += `\nvar ${name} = (${value.code})`
+		code += '\n__pos.line = ' + value.line + ', __pos.size = ' + value.size
+		code += '\nvar ' + name + ' = (' + value.code + ')'
+		return name
+	}
+
+	/**
+	 * @param {Value} value
+	 * @returns {string}
+	 * @private
+	 */
+	function compileFunction(value) {
+		var name = '__' + (n++)
+
+		code += '\n__pos.line = ' + value.line + ', __pos.size = ' + value.size
+		code += '\nvar ' + name + ' = function (' + value.args + ') {\n' + value.body + '\n}'
 		return name
 	}
 
@@ -176,9 +191,11 @@ module.exports = function (source, value) {
 	 * @private
 	 */
 	function preparePath(path) {
-		let parts = path.split('.')
-		parts = parts.map(part => numericRegex.test(part) ? part : `'${escape(part)}'`)
-		return `[${parts.join(', ')}]`
+		var parts = path.split('.')
+		parts = parts.map(function (part) {
+			return numericRegex.test(part) ? part : '\'' + escape(part) + '\''
+		})
+		return '[' + parts.join(', ') + ']'
 	}
 }
 
@@ -210,7 +227,7 @@ function escape(str) {
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Wed Jan 20 2016 02:06:31 GMT-0200 (BRST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Mon Feb 29 2016 10:05:24 GMT-0300 (BRT)
 </footer>
 
 <script> prettyPrint(); </script>
