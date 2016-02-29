@@ -215,15 +215,27 @@ describe('value syntax', function () {
 			a: 2
 		})
 	})
+
+	it('should support function syntax', function () {
+		var fn = execute(['function', '\treturn 2'])
+		fn().should.be.equal(2)
+
+		var fn2 = execute(['function a, b', '\treturn a + b'])
+		fn2(3, 14).should.be.equal(17)
+	})
 })
 
-function check(lines, value) {
+function execute(lines) {
 	var source = '#\n' + lines.map(function (e) {
 			return '\t' + e
 		}).join('\n'),
 		parsed = spec.parse(source)
 	spec.compile(source, parsed)
-	should(parsed.children[0].run(context)).be.eql(value)
+	return parsed.children[0].run(context)
+}
+
+function check(lines, value) {
+	should(execute(lines)).be.eql(value)
 }
 
 /**

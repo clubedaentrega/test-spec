@@ -64,6 +64,14 @@ matches `[15, 3, 14]`.
 		*	4
 Means `[[1, 2], [3, 4]]`
 
+## Functions
+Define functions like:
+
+	function a, b
+		return a + b
+
+The function body may span multiple lines. The argument list may be empty.
+
 ## Mixins
 Mixins are used to derive a similar object from a base one. Suppose `user = {name: 'John', pass: '123'}`. Then,
 
