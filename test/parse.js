@@ -63,4 +63,29 @@ describe('parse', function () {
 			}
 		})
 	})
+
+	it('should parse code blocks', function () {
+		spec.parse('# A\ntext\n```lang\ncode\n```\nmore text').should.be.eql({
+			type: 'section',
+			name: 'A',
+			line: 1,
+			children: [{
+				type: 'text',
+				content: 'text',
+				line: 2,
+				size: 1
+			}, {
+				type: 'code',
+				language: 'lang',
+				content: 'code',
+				line: 3,
+				size: 3
+			}, {
+				type: 'text',
+				content: 'more text',
+				line: 6,
+				size: 1
+			}]
+		})
+	})
 })
