@@ -15,10 +15,14 @@ describe('parse', function () {
 		spec.parse(source).should.be.eql({
 			type: 'section',
 			name: 'Title',
+			size: 1,
+			content: '# Title',
 			line: 1,
 			children: [{
 				type: 'section',
 				name: 'Sub section',
+				size: 1,
+				content: '## Sub section',
 				line: 2,
 				children: [{
 					type: 'text',
@@ -30,6 +34,7 @@ describe('parse', function () {
 					subtype: 'object',
 					line: 4,
 					size: 2,
+					content: '\tuser:\n\t\tname: "Gui".toUpperCase()',
 					keys: [{
 						name: 'user',
 						value: {
@@ -68,6 +73,8 @@ describe('parse', function () {
 		spec.parse('# A\ntext\n```lang\ncode\n```\nmore text').should.be.eql({
 			type: 'section',
 			name: 'A',
+			size: 1,
+			content: '# A',
 			line: 1,
 			children: [{
 				type: 'text',

@@ -24,3 +24,9 @@ module.exports.baseContext = require('./lib/baseContext')
  * @see module:lib/getSnippet
  */
 module.exports.getSnippet = require('./lib/getSnippet')
+
+/**
+ * Unparse
+ * @see module:lib/stringify
+ */
+module.exports.stringify = require('./lib/stringify')
