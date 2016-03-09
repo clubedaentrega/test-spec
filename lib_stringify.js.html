@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Source: lib/getSnippet.js</title>
+    <title>JSDoc: Source: lib/stringify.js</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Source: lib/getSnippet.js</h1>
+    <h1 class="page-title">Source: lib/stringify.js</h1>
 
     
 
@@ -26,27 +26,37 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>/** @module */
-'use strict'
+            <pre class="prettyprint source linenums"><code>'use strict'
 
 /**
- * Extract the code snippet in the given region
- * @param {string} source - original source
- * @param {number} line
- * @param {number} [size=1]
+ * Turn a section into a string
+ * @param {Section} section
  * @returns {string}
  */
-module.exports = function (source, line, size) {
-	var lines = source.split(/\r?\n/),
-		fromLine = Math.max(1, line - 2) - 1,
-		toLine = Math.min(lines.length, line + size + 2)
-	return lines.slice(fromLine, toLine).map(function (str, i) {
-		var lineNum = i + 1 + fromLine
-		if (lineNum >= line &amp;&amp; lineNum &lt; line + size) {
-			return ' ' + lineNum + ' >> | ' + str
+module.exports = function (section) {
+	var newSource = '',
+		lastNL = 0
+
+	var stringify = function (block) {
+		if (block.type === 'section') {
+			newSource += block.content + '\n'
+			lastNL = 1
+			block.children.forEach(stringify)
+		} else if (block.type === 'text') {
+			newSource += block.content + '\n\n'
+			lastNL = 2
+		} else if (block.type === 'code') {
+			newSource += '```' + block.language + '\n' + block.content + '\n```\n\n'
+			lastNL = 2
+		} else if (block.type === 'value') {
+			newSource += block.content + '\n\n'
+			lastNL = 2
 		}
-		return ' ' + lineNum + '    | ' + str
-	}).join('\n')
+	}
+
+	stringify(section)
+
+	return newSource.substr(0, newSource.length - lastNL)
 }</code></pre>
         </article>
     </section>
