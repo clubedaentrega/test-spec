@@ -18,12 +18,14 @@ describe('parse', function () {
 			size: 1,
 			content: '# Title',
 			line: 1,
+			level: 1,
 			children: [{
 				type: 'section',
 				name: 'Sub section',
 				size: 1,
 				content: '## Sub section',
 				line: 2,
+				level: 2,
 				children: [{
 					type: 'text',
 					content: 'Some textual content',
@@ -76,6 +78,7 @@ describe('parse', function () {
 			size: 1,
 			content: '# A',
 			line: 1,
+			level: 1,
 			children: [{
 				type: 'text',
 				content: 'text',
