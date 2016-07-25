@@ -1,3 +1,6 @@
+# 1.5.1
+* Fixed: error message for compilation errors
+
 # 1.5.0
 * Added: spaces between different section headers in stringify()
 
